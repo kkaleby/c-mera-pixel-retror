@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Câmera Digital Retro Pixelizada</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --camera-black: #1a1a1a;
+            --camera-gray: #2d2d2d;
+            --camera-silver: #4a4a4a;
+            --camera-highlight: #5a5a5a;
+            --camera-accent: #3a8cff;
+            --camera-accent-dark: #2a6cd6;
+            --camera-text: #f0f0f0;
+            --camera-text-dim: #aaaaaa;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: var(--camera-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+            background: linear-gradient(90deg, #ff6b6b, #ffd166, #06d6a0, #118ab2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            color: var(--camera-text-dim);
+            font-size: 1.1rem;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 900px;
+            gap: 20px;
+        }
+
+        /* Estilo principal da câmera */
+        .camera-body {
+            width: 100%;
+            max-width: 850px;
+            background-color: var(--camera-black);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--camera-highlight);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Visor da câmera */
+        .camera-viewfinder {
+            background-color: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid var(--camera-silver);
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.7);
+            aspect-ratio: 4/3;
+            width: 100%;
+        }
+
+        #videoCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        .viewfinder-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 15px;
+        }
+
+        .viewfinder-top-bar, .viewfinder-bottom-bar {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 8px 12px;
+            border-radius: 5px;
+        }
+
+        .viewfinder-info {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: white;
+            font-weight: 500;
+        }
+
+        .viewfinder-info span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .focus-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 80px;
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            border-radius: 5px;
+            pointer-events: none;
+        }
+
+        /* Controles da câmera */
+        .camera-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .control-group {
+            background-color: var(--camera-gray);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid var(--camera-highlight);
+        }
+
+        .control-group h3 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            color: var(--camera-text-dim);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group h3 i {
+            color: var(--camera-accent);
+        }
+
+        /* Botões de controle */
+        .control-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn {
+            background-color: var(--camera-silver);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn:hover {
+            background-color: var(--camera-highlight);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background-color: var(--camera-accent);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--camera-accent-dark);
+        }
+
+        .btn-danger {
+            background-color: #ff4757;
+        }
+
+        .btn-danger:hover {
+            background-color: #ff3742;
+        }
+
+        .btn-success {
+            background-color: #2ed573;
+        }
+
+        .btn-success:hover {
+            background-color: #25c464;
+        }
+
+        /* Sliders e controles deslizantes */
+        .slider-container {
+            margin-bottom: 15px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--camera-silver);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--camera-accent);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Filtros retro */
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .filter-option {
+            background-color: var(--camera-silver);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+
+        .filter-option:hover {
+            background-color: var(--camera-highlight);
+            transform: translateY(-3px);
+        }
+
+        .filter-option.active {
+            border-color: var(--camera-accent);
+            background-color: rgba(58, 140, 255, 0.2);
+        }
+
+        .filter-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .filter-color-preview {
+            width: 100%;
+            height: 30px;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+
+        /* Galeria */
+        .gallery-container {
+            width: 100%;
+            max-width: 850px;
+            background-color: var(--camera-black);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--camera-highlight);
+            display: none;
+        }
+
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .gallery-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .gallery-image {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid var(--camera-silver);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-image:hover {
+            transform: scale(1.05);
+            border-color: var(--camera-accent);
+        }
+
+        /* Indicadores de status */
+        .status-indicators {
+            display: flex;
+            justify-content: space-between;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .battery-level {
+            width: 40px;
+            height: 18px;
+            background-color: var(--camera-silver);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .battery-fill {
+            height: 100%;
+            background-color: #2ed573;
+            width: 80%;
+            transition: width 0.5s ease;
+        }
+
+        /* Rodapé */
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: var(--camera-text-dim);
+            font-size: 0.9rem;
+            width: 100%;
+            max-width: 900px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .camera-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .btn {
+                min-width: 100px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .camera-body {
+                padding: 15px;
+            }
+            
+            .filters-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .btn {
+                min-width: 80px;
+                padding: 8px 10px;
+                font-size: 0.9rem;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* Modal para visualização de imagem */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.7);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: var(--camera-accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Câmera Pixel</h1>
+        <p>Uma briza, câmera com filtros inspirados em consoles clássicos, criador por K-leb</p>
+    </div>
+
+    <div class="container">
+        <!-- Corpo principal da câmera -->
+        <div class="camera-body">
+            <!-- Visor da câmera -->
+            <div class="camera-viewfinder">
+                <canvas id="videoCanvas"></canvas>
+                <div class="viewfinder-overlay">
+                    <div class="viewfinder-top-bar">
+                        <div class="viewfinder-info">
+                            <span><i class="fas fa-bolt"></i> <span id="exposureValue">+0.0</span></span>
+                            <span><i class="fas fa-expand-alt"></i> <span id="zoomValue">1.0x</span></span>
+                            <span><i class="fas fa-camera"></i> <span id="isoValue">ISO 100</span></span>
+                        </div>
+                        <div class="viewfinder-info">
+                            <span><i class="fas fa-sun"></i> <span id="wbValue">Auto</span></span>
+                            <span><i class="fas fa-clock"></i> <span id="timerValue">OFF</span></span>
+                            <span><i class="fas fa-sd-card"></i> <span id="storageValue">87%</span></span>
+                        </div>
+                    </div>
+                    <div class="focus-box"></div>
+                    <div class="viewfinder-bottom-bar">
+                        <div class="viewfinder-info">
+                            <span><i class="fas fa-filter"></i> <span id="filterValue">Nenhum</span></span>
+                            <span><i class="fas fa-broadcast-tower"></i> <span id="resolutionValue">64×64</span></span>
+                            <span><i class="fas fa-battery-three-quarters"></i> <span id="batteryValue">78%</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controles de resolução e filtros -->
+            <div class="camera-controls">
+                <div class="control-group">
+                    <h3><i class="fas fa-expand-alt"></i> Resolução</h3>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Resolução:</span>
+                            <span id="resolutionDisplay">64×64</span>
+                        </div>
+                        <input type="range" min="2" max="512" value="64" step="1" class="slider" id="resolutionSlider">
+                        <div class="slider-label">
+                            <span>Baixa</span>
+                            <span>Alta</span>
+                        </div>
+                    </div>
+                    <div class="control-buttons">
+                        <button class="btn" id="res64">64×64</button>
+                        <button class="btn" id="res32">32×32</button>
+                        <button class="btn" id="res16">16×16</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3><i class="fas fa-camera"></i> Controles</h3>
+                    <div class="control-buttons">
+                        <button class="btn btn-primary" id="captureBtn">
+                            <i class="fas fa-camera"></i> Capturar Foto
+                        </button>
+                        <button class="btn" id="toggleCameraBtn">
+                            <i class="fas fa-sync-alt"></i> Alternar Câmera
+                        </button>
+                        <button class="btn" id="timerBtn">
+                            <i class="fas fa-clock"></i> Temporizador
+                        </button>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Exposição:</span>
+                            <span id="exposureDisplay">0.0</span>
+                        </div>
+                        <input type="range" min="-2" max="2" value="0" step="0.1" class="slider" id="exposureSlider">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3><i class="fas fa-eye"></i> Visualização</h3>
+                    <div class="control-buttons">
+                        <button class="btn" id="galleryBtn">
+                            <i class="fas fa-images"></i> Galeria
+                        </button>
+                        <button class="btn btn-danger" id="clearGalleryBtn">
+                            <i class="fas fa-trash"></i> Limpar Galeria
+                        </button>
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>Zoom:</span>
+                            <span id="zoomDisplay">1.0x</span>
+                        </div>
+                        <input type="range" min="1" max="4" value="1" step="0.1" class="slider" id="zoomSlider">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros retro -->
+            <div class="control-group">
+                <h3><i class="fas fa-palette"></i> Filtros Retro</h3>
+                <div class="filters-grid">
+                    <div class="filter-option active" data-filter="none">
+                        <div class="filter-color-preview" style="background: linear-gradient(90deg, #ff0000, #00ff00, #0000ff);"></div>
+                        <div class="filter-name">Nenhum</div>
+                    </div>
+                    <div class="filter-option" data-filter="pico8">
+                        <div class="filter-color-preview" style="background: linear-gradient(90deg, #000000, #1D2B53, #7E2553, #FF004D);"></div>
+                        <div class="filter-name">PICO-8</div>
+                    </div>
+                    <div class="filter-option" data-filter="gameboy">
+                        <div class="filter-color-preview" style="background: linear-gradient(90deg, #0f380f, #306230, #8bac0f, #9bbc0f);"></div>
+                        <div class="filter-name">Game Boy</div>
+                    </div>
+                    <div class="filter-option" data-filter="nes">
+                        <div class="filter-color-preview" style="background: linear-gradient(90deg, #000000, #fcfcfc, #f8f8f8, #bcbcbc);"></div>
+                        <div class="filter-name">NES</div>
+                    </div>
+                    <div class="filter-option" data-filter="cga">
+                        <div class="filter-color-preview" style="background: linear-gradient(90deg, #000000, #55ffff, #ff55ff, #ffffff);"></div>
+                        <div class="filter-name">CGA</div>
+                    </div>
+                    <div class="filter-option" data-filter="c64">
+                        <div class="filter-color-preview" style="background: linear-gradient(90deg, #000000, #6c6c6c, #b8b8b8, #ffffff);"></div>
+                        <div class="filter-name">Commodore 64</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indicadores de status -->
+            <div class="status-indicators">
+                <div class="status-item">
+                    <i class="fas fa-battery-three-quarters"></i>
+                    <div class="battery-level">
+                        <div class="battery-fill" id="batteryFill"></div>
+                    </div>
+                    <span id="batteryText">78%</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-sd-card"></i>
+                    <span>Armazenamento: <span id="storageText">87%</span></span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-camera"></i>
+                    <span>Câmera: <span id="cameraTypeText">Traseira</span></span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-filter"></i>
+                    <span>Filtro: <span id="activeFilterText">Nenhum</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Galeria de fotos -->
+        <div class="gallery-container" id="galleryContainer">
+            <div class="gallery-header">
+                <h2><i class="fas fa-images"></i> Galeria de Fotos</h2>
+                <button class="btn btn-danger" id="closeGalleryBtn">
+                    <i class="fas fa-times"></i> Fechar
+                </button>
+            </div>
+            <div class="gallery-images" id="galleryImages">
+                <!-- As imagens serão adicionadas dinamicamente aqui -->
+            </div>
+            <p id="emptyGalleryMessage" style="text-align: center; padding: 20px; color: var(--camera-text-dim);">
+                A galeria está vazia. Capture algumas fotos para vê-las aqui!
+            </p>
+        </div>
+    </div>
+
+    <!-- Modal para visualização de imagem -->
+    <div class="modal" id="imageModal">
+        <span class="modal-close" id="modalClose">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <div class="footer">
+        <p>Câmera Digital Retro Pixelizada | Captura de imagens com estética de consoles clássicos | Desenvolvido com HTML5, CSS3 e JavaScript</p>
+    </div>
+
+    <script>
+        // Elementos principais
+        const videoCanvas = document.getElementById('videoCanvas');
+        const ctx = videoCanvas.getContext('2d');
+        const resolutionSlider = document.getElementById('resolutionSlider');
+        const resolutionDisplay = document.getElementById('resolutionDisplay');
+        const resolutionValue = document.getElementById('resolutionValue');
+        const exposureSlider = document.getElementById('exposureSlider');
+        const exposureDisplay = document.getElementById('exposureDisplay');
+        const exposureValue = document.getElementById('exposureValue');
+        const zoomSlider = document.getElementById('zoomSlider');
+        const zoomDisplay = document.getElementById('zoomDisplay');
+        const zoomValue = document.getElementById('zoomValue');
+        const captureBtn = document.getElementById('captureBtn');
+        const toggleCameraBtn = document.getElementById('toggleCameraBtn');
+        const timerBtn = document.getElementById('timerBtn');
+        const galleryBtn = document.getElementById('galleryBtn');
+        const clearGalleryBtn = document.getElementById('clearGalleryBtn');
+        const closeGalleryBtn = document.getElementById('closeGalleryBtn');
+        const galleryContainer = document.getElementById('galleryContainer');
+        const galleryImages = document.getElementById('galleryImages');
+        const emptyGalleryMessage = document.getElementById('emptyGalleryMessage');
+        const cameraBody = document.querySelector('.camera-body');
+        const filterOptions = document.querySelectorAll('.filter-option');
+        const activeFilterText = document.getElementById('activeFilterText');
+        const filterValue = document.getElementById('filterValue');
+        const res64Btn = document.getElementById('res64');
+        const res32Btn = document.getElementById('res32');
+        const res16Btn = document.getElementById('res16');
+        const batteryFill = document.getElementById('batteryFill');
+        const batteryText = document.getElementById('batteryText');
+        const batteryValue = document.getElementById('batteryValue');
+        const storageText = document.getElementById('storageText');
+        const storageValue = document.getElementById('storageValue');
+        const cameraTypeText = document.getElementById('cameraTypeText');
+        const isoValue = document.getElementById('isoValue');
+        const wbValue = document.getElementById('wbValue');
+        const timerValue = document.getElementById('timerValue');
+        const modal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalClose = document.getElementById('modalClose');
+
+        // Variáveis de estado
+        let videoStream = null;
+        let isFrontCamera = false;
+        let currentResolution = 64;
+        let currentFilter = 'none';
+        let isTimerActive = false;
+        let timerCountdown = 0;
+        let timerInterval = null;
+        let batteryLevel = 78;
+        let storageLevel = 87;
+        let exposure = 0;
+        let zoom = 1;
+        let capturedImages = [];
+        
+        // Paletas de cores para os filtros
+        const filterPalettes = {
+            none: null,
+            pico8: [
+                [0, 0, 0],       // Preto
+                [29, 43, 83],    // Azul escuro
+                [126, 37, 83],   // Roxo
+                [255, 0, 77],    // Vermelho
+                [255, 163, 0],   // Laranja
+                [255, 236, 39],  // Amarelo
+                [0, 228, 54],    // Verde
+                [41, 173, 255],  // Azul claro
+                [131, 118, 156], // Cinza azulado
+                [255, 119, 168], // Rosa
+                [255, 204, 170], // Pele
+                [41, 24, 20]     // Marrom
+            ],
+            gameboy: [
+                [15, 56, 15],    // Verde muito escuro
+                [48, 98, 48],    // Verde escuro
+                [139, 172, 15],  // Verde médio
+                [155, 188, 15]   // Verde claro
+            ],
+            nes: [
+                [0, 0, 0],       // Preto
+                [255, 255, 255], // Branco
+                [188, 188, 188], // Cinza claro
+                [136, 136, 136], // Cinza médio
+                [85, 85, 85],    // Cinza escuro
+                [255, 0, 0],     // Vermelho
+                [0, 255, 0],     // Verde
+                [0, 0, 255]      // Azul
+            ],
+            cga: [
+                [0, 0, 0],       // Preto
+                [85, 255, 255],  // Ciano
+                [255, 85, 255],  // Magenta
+                [255, 255, 255]  // Branco
+            ],
+            c64: [
+                [0, 0, 0],       // Preto
+                [108, 108, 108], // Cinza médio
+                [184, 184, 184], // Cinza claro
+                [255, 255, 255]  // Branco
+            ]
+        };
+
+        // Inicializar a câmera
+        async function initCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: isFrontCamera ? "user" : "environment",
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                };
+                
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const video = document.createElement('video');
+                video.srcObject = videoStream;
+                video.autoplay = true;
+                video.playsInline = true;
+                
+                // Esperar o vídeo estar pronto
+                video.addEventListener('loadedmetadata', () => {
+                    updateCanvasSize();
+                    drawVideoFrame(video);
+                });
+                
+                // Atualizar indicadores de câmera
+                cameraTypeText.textContent = isFrontCamera ? "Frontal" : "Traseira";
+                
+                // Iniciar animação da bateria
+                updateBattery();
+            } catch (error) {
+                console.error("Erro ao acessar a câmera:", error);
+                // Mostrar um placeholder se a câmera não estiver disponível
+                drawPlaceholder();
+            }
+        }
+
+        // Desenhar placeholder se a câmera não estiver disponível
+        function drawPlaceholder() {
+            ctx.fillStyle = '#333';
+            ctx.fillRect(0, 0, videoCanvas.width, videoCanvas.height);
+            
+            ctx.fillStyle = '#666';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Câmera não disponível', videoCanvas.width/2, videoCanvas.height/2 - 20);
+            ctx.font = '16px Arial';
+            ctx.fillText('Use um dispositivo com câmera ou conceda permissão', videoCanvas.width/2, videoCanvas.height/2 + 10);
+            
+            // Desenhar um padrão de grade para simular vídeo
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 1;
+            
+            for (let x = 0; x < videoCanvas.width; x += 20) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, videoCanvas.height);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y < videoCanvas.height; y += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(videoCanvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        // Atualizar tamanho do canvas
+        function updateCanvasSize() {
+            const container = document.querySelector('.camera-viewfinder');
+            videoCanvas.width = container.clientWidth;
+            videoCanvas.height = container.clientHeight;
+        }
+
+        // Desenhar quadro do vídeo com efeitos
+        function drawVideoFrame(video) {
+            if (!videoStream) return;
+            
+            // Ajustar tamanho do canvas se necessário
+            updateCanvasSize();
+            
+            // Calcular dimensões com base no zoom
+            const canvasWidth = videoCanvas.width;
+            const canvasHeight = videoCanvas.height;
+            const scaledWidth = canvasWidth * zoom;
+            const scaledHeight = canvasHeight * zoom;
+            const offsetX = (canvasWidth - scaledWidth) / 2;
+            const offsetY = (canvasHeight - scaledHeight) / 2;
+            
+            // Limpar canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            // Desenhar vídeo
+            ctx.drawImage(video, offsetX, offsetY, scaledWidth, scaledHeight);
+            
+            // Aplicar resolução baixa (pixelização)
+            applyPixelation();
+            
+            // Aplicar filtro
+            applyFilter();
+            
+            // Aplicar exposição
+            applyExposure();
+            
+            // Continuar animação
+            requestAnimationFrame(() => drawVideoFrame(video));
+        }
+
+        // Aplicar pixelação baseada na resolução
+        function applyPixelation() {
+            if (currentResolution >= 512) return; // Resolução original, sem pixelação
+            
+            const canvasWidth = videoCanvas.width;
+            const canvasHeight = videoCanvas.height;
+            
+            // Reduzir a resolução
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Definir tamanho reduzido
+            const pixelSize = Math.max(1, Math.floor(canvasWidth / currentResolution));
+            const reducedWidth = Math.floor(canvasWidth / pixelSize);
+            const reducedHeight = Math.floor(canvasHeight / pixelSize);
+            
+            tempCanvas.width = reducedWidth;
+            tempCanvas.height = reducedHeight;
+            
+            // Desenhar imagem reduzida
+            tempCtx.drawImage(videoCanvas, 0, 0, reducedWidth, reducedHeight);
+            
+            // Ampliar de volta ao tamanho original
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(tempCanvas, 0, 0, reducedWidth, reducedHeight, 0, 0, canvasWidth, canvasHeight);
+        }
+
+        // Aplicar filtro retro
+        function applyFilter() {
+            if (currentFilter === 'none') return;
+            
+            const canvasWidth = videoCanvas.width;
+            const canvasHeight = videoCanvas.height;
+            const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+            const data = imageData.data;
+            const palette = filterPalettes[currentFilter];
+            
+            // Aplicar paleta de cores
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                
+                // Encontrar a cor mais próxima na paleta
+                let closestColor = palette[0];
+                let minDistance = colorDistance(r, g, b, closestColor[0], closestColor[1], closestColor[2]);
+                
+                for (let j = 1; j < palette.length; j++) {
+                    const distance = colorDistance(r, g, b, palette[j][0], palette[j][1], palette[j][2]);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestColor = palette[j];
+                    }
+                }
+                
+                // Aplicar a cor da paleta
+                data[i] = closestColor[0];
+                data[i + 1] = closestColor[1];
+                data[i + 2] = closestColor[2];
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // Calcular distância entre cores
+        function colorDistance(r1, g1, b1, r2, g2, b2) {
+            return Math.sqrt(
+                Math.pow(r2 - r1, 2) + 
+                Math.pow(g2 - g1, 2) + 
+                Math.pow(b2 - b1, 2)
+            );
+        }
+
+        // Aplicar ajuste de exposição
+        function applyExposure() {
+            if (exposure === 0) return;
+            
+            const canvasWidth = videoCanvas.width;
+            const canvasHeight = videoCanvas.height;
+            const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+            const data = imageData.data;
+            
+            // Ajustar brilho com base na exposição
+            const factor = Math.pow(2, exposure);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.min(255, data[i] * factor);
+                data[i + 1] = Math.min(255, data[i + 1] * factor);
+                data[i + 2] = Math.min(255, data[i + 2] * factor);
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // Capturar foto
+        function capturePhoto() {
+            if (isTimerActive) {
+                startTimerCountdown();
+                return;
+            }
+            
+            // Criar um canvas temporário para a captura
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Definir o tamanho da imagem capturada
+            tempCanvas.width = currentResolution;
+            tempCanvas.height = Math.floor(currentResolution * (videoCanvas.height / videoCanvas.width));
+            
+            // Desenhar a imagem atual no canvas temporário
+            tempCtx.drawImage(videoCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
+            
+            // Obter a imagem como URL de dados
+            const imageUrl = tempCanvas.toDataURL('image/png');
+            
+            // Adicionar à galeria
+            capturedImages.push({
+                url: imageUrl,
+                filter: currentFilter,
+                resolution: currentResolution,
+                date: new Date().toLocaleString()
+            });
+            
+            // Atualizar armazenamento
+            updateStorage();
+            
+            // Feedback visual
+            captureBtn.innerHTML = '<i class="fas fa-check"></i> Capturado!';
+            captureBtn.style.backgroundColor = '#2ed573';
+            
+            setTimeout(() => {
+                captureBtn.innerHTML = '<i class="fas fa-camera"></i> Capturar Foto';
+                captureBtn.style.backgroundColor = '';
+            }, 1000);
+            
+            // Atualizar galeria se estiver visível
+            if (galleryContainer.style.display === 'block') {
+                updateGallery();
+            }
+        }
+
+        // Iniciar contagem regressiva do temporizador
+        function startTimerCountdown() {
+            timerCountdown = 3;
+            timerBtn.innerHTML = `<i class="fas fa-clock"></i> ${timerCountdown}`;
+            timerBtn.style.backgroundColor = '#ffa502';
+            
+            timerInterval = setInterval(() => {
+                timerCountdown--;
+                timerBtn.innerHTML = `<i class="fas fa-clock"></i> ${timerCountdown}`;
+                
+                if (timerCountdown <= 0) {
+                    clearInterval(timerInterval);
+                    timerBtn.innerHTML = '<i class="fas fa-clock"></i> Temporizador';
+                    timerBtn.style.backgroundColor = '';
+                    isTimerActive = false;
+                    
+                    // Capturar foto após a contagem regressiva
+                    capturePhoto();
+                }
+            }, 1000);
+        }
+
+        // Atualizar galeria
+        function updateGallery() {
+            galleryImages.innerHTML = '';
+            
+            if (capturedImages.length === 0) {
+                emptyGalleryMessage.style.display = 'block';
+                return;
+            }
+            
+            emptyGalleryMessage.style.display = 'none';
+            
+            // Adicionar imagens à galeria
+            capturedImages.forEach((image, index) => {
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'gallery-item';
+                
+                const img = document.createElement('img');
+                img.src = image.url;
+                img.alt = `Foto ${index + 1}`;
+                img.className = 'gallery-image';
+                img.dataset.index = index;
+                
+                img.addEventListener('click', () => {
+                    modalImage.src = image.url;
+                    modal.style.display = 'flex';
+                });
+                
+                const info = document.createElement('div');
+                info.style.fontSize = '0.8rem';
+                info.style.color = 'var(--camera-text-dim)';
+                info.style.marginTop = '5px';
+                info.innerHTML = `
+                    ${image.resolution}×${Math.floor(image.resolution * (videoCanvas.height / videoCanvas.width))} | 
+                    ${image.filter} | ${image.date}
+                `;
+                
+                imgContainer.appendChild(img);
+                imgContainer.appendChild(info);
+                galleryImages.appendChild(imgContainer);
+            });
+        }
+
+        // Atualizar nível de bateria
+        function updateBattery() {
+            // Simular variação da bateria
+            batteryLevel -= 0.1;
+            if (batteryLevel < 5) batteryLevel = 100; // Recarregar quando chegar a 5%
+            
+            batteryFill.style.width = `${batteryLevel}%`;
+            batteryText.textContent = `${Math.round(batteryLevel)}%`;
+            batteryValue.textContent = `${Math.round(batteryLevel)}%`;
+            
+            // Mudar cor conforme o nível
+            if (batteryLevel > 50) {
+                batteryFill.style.backgroundColor = '#2ed573';
+            } else if (batteryLevel > 20) {
+                batteryFill.style.backgroundColor = '#ffa502';
+            } else {
+                batteryFill.style.backgroundColor = '#ff4757';
+            }
+            
+            // Atualizar a cada 10 segundos
+            setTimeout(updateBattery, 10000);
+        }
+
+        // Atualizar armazenamento
+        function updateStorage() {
+            // Simular uso de armazenamento
+            storageLevel = Math.max(5, 100 - (capturedImages.length * 2));
+            
+            storageText.textContent = `${storageLevel}%`;
+            storageValue.textContent = `${storageLevel}%`;
+        }
+
+        // Alternar câmera
+        async function toggleCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+            
+            isFrontCamera = !isFrontCamera;
+            await initCamera();
+            
+            toggleCameraBtn.innerHTML = isFrontCamera ? 
+                '<i class="fas fa-mobile-alt"></i> Frontal' : 
+                '<i class="fas fa-camera"></i> Traseira';
+        }
+
+        // Alternar temporizador
+        function toggleTimer() {
+            isTimerActive = !isTimerActive;
+            
+            if (isTimerActive) {
+                timerBtn.style.backgroundColor = '#ffa502';
+                timerValue.textContent = '3s';
+            } else {
+                timerBtn.style.backgroundColor = '';
+                timerValue.textContent = 'OFF';
+                
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerBtn.innerHTML = '<i class="fas fa-clock"></i> Temporizador';
+                }
+            }
+        }
+
+        // Inicializar eventos
+        function initEvents() {
+            // Controle de resolução
+            resolutionSlider.addEventListener('input', () => {
+                currentResolution = parseInt(resolutionSlider.value);
+                resolutionDisplay.textContent = `${currentResolution}×${Math.floor(currentResolution * (videoCanvas.height / videoCanvas.width))}`;
+                resolutionValue.textContent = `${currentResolution}×${Math.floor(currentResolution * (videoCanvas.height / videoCanvas.width))}`;
+            });
+            
+            res64Btn.addEventListener('click', () => {
+                currentResolution = 64;
+                resolutionSlider.value = 64;
+                resolutionDisplay.textContent = '64×48';
+                resolutionValue.textContent = '64×48';
+            });
+            
+            res32Btn.addEventListener('click', () => {
+                currentResolution = 32;
+                resolutionSlider.value = 32;
+                resolutionDisplay.textContent = '32×24';
+                resolutionValue.textContent = '32×24';
+            });
+            
+            res16Btn.addEventListener('click', () => {
+                currentResolution = 16;
+                resolutionSlider.value = 16;
+                resolutionDisplay.textContent = '16×12';
+                resolutionValue.textContent = '16×12';
+            });
+            
+            // Controle de exposição
+            exposureSlider.addEventListener('input', () => {
+                exposure = parseFloat(exposureSlider.value);
+                exposureDisplay.textContent = exposure.toFixed(1);
+                exposureValue.textContent = exposure >= 0 ? `+${exposure.toFixed(1)}` : exposure.toFixed(1);
+            });
+            
+            // Controle de zoom
+            zoomSlider.addEventListener('input', () => {
+                zoom = parseFloat(zoomSlider.value);
+                zoomDisplay.textContent = `${zoom.toFixed(1)}x`;
+                zoomValue.textContent = `${zoom.toFixed(1)}x`;
+            });
+            
+            // Botão de captura
+            captureBtn.addEventListener('click', capturePhoto);
+            
+            // Botão de alternar câmera
+            toggleCameraBtn.addEventListener('click', toggleCamera);
+            
+            // Botão de temporizador
+            timerBtn.addEventListener('click', toggleTimer);
+            
+            // Botão da galeria
+            galleryBtn.addEventListener('click', () => {
+                cameraBody.style.display = 'none';
+                galleryContainer.style.display = 'block';
+                updateGallery();
+            });
+            
+            // Botão de fechar galeria
+            closeGalleryBtn.addEventListener('click', () => {
+                galleryContainer.style.display = 'none';
+                cameraBody.style.display = 'flex';
+            });
+            
+            // Botão de limpar galeria
+            clearGalleryBtn.addEventListener('click', () => {
+                if (capturedImages.length > 0) {
+                    if (confirm('Tem certeza que deseja limpar toda a galeria?')) {
+                        capturedImages = [];
+                        updateGallery();
+                        updateStorage();
+                    }
+                }
+            });
+            
+            // Filtros
+            filterOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    // Remover classe ativa de todos
+                    filterOptions.forEach(opt => opt.classList.remove('active'));
+                    
+                    // Adicionar classe ativa ao selecionado
+                    option.classList.add('active');
+                    
+                    // Atualizar filtro atual
+                    currentFilter = option.dataset.filter;
+                    activeFilterText.textContent = option.querySelector('.filter-name').textContent;
+                    filterValue.textContent = option.querySelector('.filter-name').textContent;
+                });
+            });
+            
+            // Modal
+            modalClose.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+            
+            window.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+            
+            // Redimensionamento da janela
+            window.addEventListener('resize', updateCanvasSize);
+        }
+
+        // Inicializar a aplicação
+        async function initApp() {
+            await initCamera();
+            initEvents();
+            updateStorage();
+            
+            // Atualizar valores iniciais
+            resolutionDisplay.textContent = `${currentResolution}×${Math.floor(currentResolution * (videoCanvas.height / videoCanvas.width))}`;
+            resolutionValue.textContent = `${currentResolution}×${Math.floor(currentResolution * (videoCanvas.height / videoCanvas.width))}`;
+            exposureDisplay.textContent = exposure.toFixed(1);
+            exposureValue.textContent = exposure >= 0 ? `+${exposure.toFixed(1)}` : exposure.toFixed(1);
+            zoomDisplay.textContent = `${zoom.toFixed(1)}x`;
+            zoomValue.textContent = `${zoom.toFixed(1)}x`;
+        }
+
+        // Iniciar quando a página carregar
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
